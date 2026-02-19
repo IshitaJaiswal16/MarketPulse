@@ -192,12 +192,3 @@ Async support, automatic OpenAPI docs at `/docs`, Pydantic validation out of the
 
 ---
 
-## 🔮 Upgrade Path
-
-- [ ] Deploy to AWS (MSK for Kafka, RDS for PostgreSQL, ECS for app)
-- [ ] Add Grafana + Prometheus for pipeline monitoring
-- [ ] Add LSTM forecasting layer — predict next price window, flag deviation
-- [ ] Expand to 50+ tickers with multi-asset support
-- [ ] Add Great Expectations for data quality checks on incoming ticks
-
----
