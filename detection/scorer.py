@@ -1,14 +1,12 @@
 """
 scorer.py
 ---------
-Combines the Kafka consumer with anomaly detection.
-This is the full pipeline: Kafka → Features → Anomaly Detection → Alert
+Full pipeline: Kafka → Features → Anomaly Detection → Storage
 """
 
 import sys
 import os
 import json
-
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from kafka import KafkaConsumer
@@ -17,6 +15,8 @@ import pandas as pd
 
 from config.settings import KAFKA_BROKER, KAFKA_TOPIC_CRYPTO, ROLLING_WINDOW
 from detection.anomaly_model import load_model, detect_anomaly
+from storage.db_writer import create_tables, insert_alert, insert_tick
+from storage.parquet_writer import write_tick
 
 
 tick_history = defaultdict(list)
@@ -55,6 +55,9 @@ def compute_features(symbol, price, size, timestamp):
 
 
 def start_scorer():
+    print("Setting up database tables...")
+    create_tables()
+
     print("Loading anomaly model...")
     model = load_model()
     print("Model loaded. Starting scorer...")
@@ -70,6 +73,10 @@ def start_scorer():
 
     for message in consumer:
         tick = message.value
+
+        # Archive raw tick to Parquet
+        write_tick(tick)
+
         features = compute_features(
             tick["symbol"], tick["price"], tick["size"], tick["timestamp"]
         )
@@ -81,18 +88,15 @@ def start_scorer():
 
         if result["is_anomaly"]:
             print(
-                f"🚨 ANOMALY DETECTED | {result['symbol']} | "
-                f"Type: {result['anomaly_type']} | "
-                f"Price: ${result['price']:,.2f} | "
-                f"Z-Score: {result['z_score']:+.3f} | "
-                f"IF Score: {result['if_score']}"
-            )
-        else:
-            print(
-                f"✅ Normal | {result['symbol']} | "
+                f"🚨 ANOMALY | {result['symbol']} | "
+                f"{result['anomaly_type']} | "
                 f"${result['price']:,.2f} | "
                 f"Z: {result['z_score']:+.3f}"
             )
+            # Save alert to PostgreSQL
+            insert_alert(result)
+        else:
+            print(f"✅ Normal | {result['symbol']} | ${result['price']:,.2f}")
 
 
 if __name__ == "__main__":
