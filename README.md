@@ -1,6 +1,6 @@
 ## 📈 MarketPulse
 
-> A real-time crypto market anomaly detection system. Think of it as a **smoke detector for your crypto** — it watches live prices and alerts you the moment something unusual happens.
+A real-time crypto market anomaly detection system. Think of it as a **smoke detector for your crypto** — it watches live prices and alerts you the moment something unusual happens.
 
 Built with production-grade tools: Kafka, Isolation Forest, PostgreSQL, FastAPI, and Streamlit.
 
